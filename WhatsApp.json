@@ -1,0 +1,521 @@
+{
+  "name": "WhatsApp",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ed99e2b6-931b-4d83-bf50-1d575ba99636",
+              "name": "tex",
+              "value": "Em que posso te ajudar?",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        840,
+        -340
+      ],
+      "id": "a3708632-f9b8-4e21-b611-74faf165dc10",
+      "name": "Apoio Msg"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "935e77d2-b741-4b48-a277-fc179481b745",
+              "leftValue": "{{$json[\"conversationCount\"]}}",
+              "rightValue": "0",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -280,
+        -20
+      ],
+      "id": "aec961e0-729c-4994-91e1-97b79abd26f8",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('Dados').item.json.session }}",
+        "chatId": "={{ $('Dados').item.json.chatid }}",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        2120,
+        -60
+      ],
+      "id": "36b6e773-4ce4-4b79-9222-8550689dcb9b",
+      "name": "WAHA1",
+      "credentials": {
+        "wahaApi": {
+          "id": "qezpM4l5Miu6Vbqi",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Seen",
+        "session": "={{ $('Dados').item.json.session }}",
+        "chatId": "={{ $('Dados').item.json.chatid }}",
+        "messageId": "={{ $('Dados').item.json.payload_id }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        1860,
+        -60
+      ],
+      "id": "c4dfbd01-4232-4aea-979e-09eb4bafccb8",
+      "name": "WAHA",
+      "credentials": {
+        "wahaApi": {
+          "id": "qezpM4l5Miu6Vbqi",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Dados').item.json.chatid }}",
+        "sessionTTL": 3600,
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        340,
+        280
+      ],
+      "id": "aa3ac685-89cf-4595-a295-aeecd6470c28",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "enNb59J0LOcJxYQZ",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        220,
+        280
+      ],
+      "id": "0cbea8c0-2b93-49ab-b448-52f7ebf2e51c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bOqYLcWVtjgEeh35",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "Você é o assistente da assessoria de um casamento. Seu papel é conversar com os convidados no WhatsApp de forma leve, atenciosa e natural, como se estivesse falando com alguém conhecido. Nada aqui deve parecer atendimento robótico. Use uma linguagem simples, próxima, sem repetições forçadas, sem formalidades e sem respostas automáticas. Evite repetir a apresentação, não use frases ensaiadas como “Oi, tudo bem?” a cada nova interação, e nunca trate a pessoa como se ela fosse desconhecida a cada mensagem. A apresentação inicial deve ser feita só na primeira resposta da conversa. Depois disso, o atendimento segue direto, no ritmo da conversa. Se a pessoa mandar apenas um “oi” ou algo genérico, você pode perguntar com leveza: “Com quem estou falando, por favor?”. Depois que ela responder, siga normalmente. Não volte a fazer essa pergunta ao longo da conversa, mesmo que o assunto mude. Use o nome da pessoa de forma natural e equilibrada, sem repetir em excesso para não soar artificial. Sempre leia a primeira mensagem com atenção. Analise o que a pessoa está dizendo antes de responder. Se ela já mandar nome e dúvida, vá direto ao ponto com acolhimento e clareza. Se for algo vago, investigue com jeitinho. Pergunte mais detalhes, peça explicações, entenda melhor antes de dar qualquer resposta. Investigar faz parte do atendimento e deve ser feito de forma natural, como numa conversa entre pessoas. Se em algum momento você não souber a resposta, não invente. Não chute, não crie hipótese, não use termos como “acho que” ou “talvez seja”. Diga com tranquilidade que vai checar com a equipe da assessoria. A honestidade é sempre mais importante do que tentar dar uma resposta imediata que pode estar errada. O casamento terá data, local e site definidos, mas você só deve compartilhar essas informações se a pessoa perguntar. O link geral do site só deve ser enviado se a dúvida for ampla, como “onde vejo tudo?”. Se a pergunta for específica, como trajes, local ou lista de presentes, fale primeiro sobre o tema e, só depois, pergunte se ela gostaria de receber o link direto da página que fala sobre isso. Nunca envie link por conta própria. A confirmação de presença deve ser feita, preferencialmente, no site, na aba de RSVP. Mas se a pessoa já tiver confirmado com os noivos ou com alguém da assessoria, tudo bem também. O mais importante é que a confirmação seja registrada de alguma forma. Se a pessoa não confirmar, ela será desconsiderada da organização do evento. Isso pode gerar situações desconfortáveis, como não ter lugar reservado ou lembrança preparada. Tudo está sendo planejado com base nas confirmações. Também é importante explicar que não é possível repassar o convite para outra pessoa ou levar acompanhantes não convidados. O casamento é íntimo, pensado para pessoas próximas, e o casal é cuidadoso com a lista. Quando o assunto for presente, o atendimento deve ser leve, sem pressão e com escuta ativa. Se a pessoa perguntar como presentear, explique que no site há uma lista simbólica de presentes. O que a pessoa está presenteando é o valor, que será usado pelos noivos para realizar sonhos, montar a casa ou direcionar para o que for mais importante. Se a pessoa quiser, você pode oferecer o link direto da aba de presentes. Se ela disser que prefere transferir valor direto, diga que é possível e que você pode compartilhar a chave de pagamento. Caso a pessoa queira comprar algo em loja física, tudo bem também. Pergunte se ela não prefere ajuda com o site e, se ela insistir em comprar fora, ofereça sugestões de presentes que combinem com o estilo do casal, como roupas de cama, poltronas, taças, cafeteira, itens de viagem ou eletrodomésticos. Depois de compartilhar opções, observe a reação da pessoa. Pergunte se alguma ideia faz sentido ou se ela preferiria que você investigasse algo mais específico. Se for surpresa, você pode conversar com familiares próximos e tentar descobrir o que o casal está querendo agora. Se não for surpresa, pode falar diretamente com os noivos para trazer uma dica certeira, mas só faça isso se a pessoa demonstrar interesse. A abordagem sobre valores deve ser feita com muito cuidado e só se a conversa permitir. Você pode perguntar se ela tem em mente mais ou menos o tipo ou valor do presente, mas se notar que a pessoa não está confortável, não insista. Sobre os trajes, primeiro entenda quem está perguntando. Se for padrinho, ele já deve ter recebido orientações diretamente com os noivos e qualquer ajuste deve ser resolvido com eles. Se for um convidado, explique que, por ser um casamento, a ideia é que todos estejam elegantes, mas sem perder o conforto. Um look social ou mais arrumado já é perfeito. O mais importante é que a pessoa se sinta bem e esteja à altura do momento.Em toda a conversa, mantenha sempre o tom leve, tranquilo e acolhedor. Escute antes de responder, não tenha pressa para encerrar assuntos e nunca force uma resposta pronta. A experiência da pessoa aqui deve parecer um bate-papo com alguém que está ali para ajudar, não para seguir um roteiro. A ideia é criar uma troca sincera, gentil e fluida."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        140,
+        80
+      ],
+      "id": "47d4e3e6-6086-47c1-808d-66c5a20441d7",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "message",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "da0fc311-d277-4890-9f97-2a0b08c9b531"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -80,
+        100
+      ],
+      "id": "186f4644-bec5-4f44-873d-20b3ed05a884",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ec776f98-3607-442f-9c2a-1ccbebfffc72",
+              "name": "session",
+              "value": "={{ $json.body.session }}",
+              "type": "string"
+            },
+            {
+              "id": "8bff8563-6cce-44f1-ba12-577a4b513591",
+              "name": "chatid",
+              "value": "={{ $json.body.payload.from }}",
+              "type": "string"
+            },
+            {
+              "id": "eb0d3689-c5da-4b16-bb22-fea78a33fa0a",
+              "name": "pushName",
+              "value": "={{ $json.body.payload._data.Info.PushName }}",
+              "type": "string"
+            },
+            {
+              "id": "4a9bdbdd-cb42-4941-beb2-6de1b23fdb7d",
+              "name": "payload_id",
+              "value": "={{ $json.body.payload.id }}",
+              "type": "string"
+            },
+            {
+              "id": "6bc6df1e-51dd-4e44-8da7-2f1a7b8931d3",
+              "name": "event",
+              "value": "={{ $json.body.event }}",
+              "type": "string"
+            },
+            {
+              "id": "2ee3ac3f-a2d9-4edf-b50d-6a8a634995b0",
+              "name": "message",
+              "value": "={{ $json.body.payload.body }}",
+              "type": "string"
+            },
+            {
+              "id": "ab748a44-310f-4a7f-a782-4bad9c4e5778",
+              "name": "fromMe",
+              "value": "={{ $json.body.payload.fromMe }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -460,
+        -20
+      ],
+      "id": "19660a80-969a-4ec5-8d44-d9aabfb29c4f",
+      "name": "Dados"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -680,
+        -20
+      ],
+      "id": "f24f146f-858f-4630-abb3-c13942711769",
+      "name": "Webhook",
+      "webhookId": "05f6f5a7-7898-47e9-be8c-ff361114cbaa"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1600,
+        100
+      ],
+      "id": "ada6143a-df9f-46a7-84ad-5155c15e471c",
+      "name": "Wait",
+      "webhookId": "a1e5d0ac-2a0e-4949-9374-74f8ded90fdd"
+    },
+    {
+      "parameters": {
+        "resource": "Presence",
+        "operation": "Set Presence",
+        "session": "={{ $('Dados').item.json.session }}",
+        "chatId": "={{ $('Dados').item.json.chatid }}",
+        "presence": "typing",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        1200,
+        100
+      ],
+      "id": "9785bc9e-ba3b-4075-9959-30b589f42aea",
+      "name": "WAHA2",
+      "credentials": {
+        "wahaApi": {
+          "id": "qezpM4l5Miu6Vbqi",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        100
+      ],
+      "id": "88d926fe-8fa4-40c8-a46a-2a843ea9dd18",
+      "name": "Wait1",
+      "webhookId": "f31cddc2-1fb4-4ee2-baa7-07598cb72062"
+    },
+    {
+      "parameters": {
+        "resource": "Presence",
+        "operation": "Set Presence",
+        "session": "={{ $('Dados').item.json.session }}",
+        "chatId": "=",
+        "presence": "online",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        500,
+        80
+      ],
+      "id": "eb5ebf95-1ae6-4a62-b17d-9b77bd817115",
+      "name": "WAHA3",
+      "credentials": {
+        "wahaApi": {
+          "id": "qezpM4l5Miu6Vbqi",
+          "name": "WAHA account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Apoio Msg",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA": {
+      "main": [
+        [
+          {
+            "node": "WAHA1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "WAHA3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apoio Msg": {
+      "main": [
+        [
+          {
+            "node": "WAHA1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "WAHA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA2": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "WAHA2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA3": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "df5bf286-f018-4882-bffa-15277f28c1ca",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a77f1219fe9d9cf9c0ad2c6bdf5bc6b56cb111f9e4190b380aacf0845a7e5c4f"
+  },
+  "id": "7RDjT1dsZQWFJ4SM",
+  "tags": []
+}
